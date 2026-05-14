@@ -1,15 +1,23 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { proxyMiddleware } from './gateway/proxy';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'Gateway is running' });
+app.get('/gateway/health', (req, res) => {
+  res.json({
+    status: 'OK', 
+    service: 'api-gateway',
+    timestamp: new Date().toISOString(),
+  });
 });
+
+app.use('/', proxyMiddleware);
 
 app.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
+  console.log(`Forwarding requests to ${process.env.MOCK_SERVICE_URL || 'https://localhost:4000'}`);
 });
