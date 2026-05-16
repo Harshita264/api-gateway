@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { proxyMiddleware } from './gateway/proxy';
+import { requestLogger } from './middleware/requestLogger';
 
 dotenv.config();
 

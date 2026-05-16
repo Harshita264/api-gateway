@@ -23,7 +23,7 @@ app.get('/api/users', (req, res) => {
  app.get('/api/users/:id', (req, res) => {
     res.json({
         service: 'mock-backend',
-        endpoint: '/api/users/${req.params.id}',
+        endpoint: `/api/users/${req.params.id}`,
         data: {id: req.params.id, name: 'Alice'},
     });
  });
