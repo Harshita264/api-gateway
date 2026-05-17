@@ -6,7 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model Requesting {
+model RequestLog {
   id              Int       @id @default(autoincrement())
   method          String
   path            String
@@ -17,4 +17,14 @@ model Requesting {
   timestamp       DateTime @default(now())
 
   @@map("request_logs")
+}
+
+model ApiKey {
+    id        Int       @id @default(autoincrement())
+    key       String    @unique
+    name      String
+    isActive  Boolean   @default(true)
+    createdAt DateTime  @default(now())
+
+    @@map("api_keys")
 }

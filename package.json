@@ -6,7 +6,8 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev:mock": "nodemon --exec ts-node mock-service/index.ts"
+    "dev:mock": "nodemon --exec ts-node mock-service/index.ts",
+    "generate:key": "ts-node src/db/seedKey.ts"
   },
   "keywords": [],
   "author": "",

@@ -17,7 +17,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
                 path: req.path,
                 statusCode: res.statusCode,
                 latencyMs,
-                apiKey: null,
+                apiKey: req.apiKey ?? null,
                 upstreamUrl: UPSTREAM_URL,
             },
         }).catch((err: Error) => {
