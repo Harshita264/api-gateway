@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import { proxyMiddleware } from './gateway/proxy';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticate } from './middleware/auth';
+import { rateLimiter } from './middleware/rateLimiter';
+
 dotenv.config();
 
 const app = express();
@@ -18,6 +20,7 @@ app.get('/gateway/health', (req, res) => {
 
 app.use(requestLogger);
 app.use(authenticate);
+app.use(rateLimiter);
 app.use('/', proxyMiddleware);
 
 app.listen(PORT, () => {
