@@ -4,6 +4,7 @@ import { proxyMiddleware } from './gateway/proxy';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticate } from './middleware/auth';
 import { rateLimiter } from './middleware/rateLimiter';
+import { cacheMiddleware } from './middleware/cache';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.get('/gateway/health', (req, res) => {
 app.use(requestLogger);
 app.use(authenticate);
 app.use(rateLimiter);
+app.use(cacheMiddleware);
 app.use('/', proxyMiddleware);
 
 app.listen(PORT, () => {
