@@ -5,6 +5,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { authenticate } from './middleware/auth';
 import { rateLimiter } from './middleware/rateLimiter';
 import { cacheMiddleware } from './middleware/cache';
+import metricsRouter from './gateway/metricsRouter';
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.get('/gateway/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use('/gateway/metrics', metricsRouter);
 
 app.use(requestLogger);
 app.use(authenticate);
