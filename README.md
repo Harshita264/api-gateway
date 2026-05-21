@@ -2,26 +2,6 @@
 
 A centralized API gateway and monitoring platform that manages, secures and tracks API traffic between clients and backend services.
 
-
-## What it does
-
-Every request to the gateway goes through this pipeline:
-
-Client Request
-      ↓
-Request Logger     — records method, path, status, latency to PostgreSQL
-      ↓
-Auth Middleware    — validates API key against database
-      ↓
-Rate Limiter       — sliding window limit per API key using Redis
-      ↓
-Cache Layer        — returns cached GET responses from Redis (TTL: 30s)
-      ↓
-Reverse Proxy      — forwards request to upstream service
-      ↓
-Upstream Service   — actual backend
-
-
 ## Features
 
 **Core Gateway**
