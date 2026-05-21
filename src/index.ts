@@ -1,11 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import { proxyMiddleware } from './gateway/proxy';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticate } from './middleware/auth';
 import { rateLimiter } from './middleware/rateLimiter';
 import { cacheMiddleware } from './middleware/cache';
 import metricsRouter from './gateway/metricsRouter';
+import { createWebSocketServer } from './gateway/websocket';
 
 dotenv.config();
 
@@ -39,7 +41,11 @@ app.use(rateLimiter);
 app.use(cacheMiddleware);
 app.use('/', proxyMiddleware);
 
-app.listen(PORT, () => {
-  console.log(`API Gateway running on port ${PORT}`);
-  console.log(`Forwarding requests to ${process.env.MOCK_SERVICE_URL || 'https://localhost:4000'}`);
+const server = createServer(app);
+createWebSocketServer(server);
+
+server.listen(PORT, () => {
+  console.log(`API Gatewayrunning on port ${PORT}`);
+  console.log(`WebSocket server running on ws://localhost:${PORT}`);
+  console.log(`Forwarding requests to ${process.env.MOCK_SERVICE_URL || 'http://localhost:4000'}`);
 });

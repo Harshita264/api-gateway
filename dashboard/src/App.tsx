@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { fetchSummary, type MetricsSummary } from './api/metrics';
+import { useState, useEffect, useRef } from 'react';
+import { fetchSummary, type RecentRequest, type MetricsSummary } from './api/metrics';
 import { RequestsChart } from './components/RequestsChart';
 import { LatencyCard } from './components/LatencyCard';
 import { ErrorRateCard } from './components/ErrorRateCard';
@@ -7,11 +7,15 @@ import { TopEndpointsTable } from './components/TopEndpointsTable';
 import { RecentRequestsFeed } from './components/RecentRequestsFeed';
 
 const REFRESH_INTERVAL = 5000;
+const WS_URL = 'ws://localhost:3000';
 
 export default function App() {
   const [data, setData] = useState<MetricsSummary | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liveRequests, setLiveRequests] = useState<RecentRequest[]>([]);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const wsRef = useRef<WebSocket | null>(null);
 
   async function load() {
     try {
@@ -25,12 +29,50 @@ export default function App() {
   }
 
   useEffect(() => {
+    function connect() {
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setWsStatus('connected');
+      };
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+
+        if(message.type === 'new_request') {
+          setLiveRequests(prev => [message.data, ...prev].slice(0, 50));
+        }
+      };
+
+      ws.onclose = () => {
+        setWsStatus('disconnected');
+        setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => {
+        setWsStatus('disconnected');
+      };
+    }
+
+    connect();
+
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
+
+  useEffect(() => {
     load();
     const interval = setInterval(load, REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 
-  return (
+  const allRequests = liveRequests.length > 0
+  ? liveRequests
+  : (data?.recentRequests ?? []);
+
+return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '24px' }}>
 
       {/* Header */}
@@ -51,6 +93,18 @@ export default function App() {
           </div>
         </div>
         <div style={{ textAlign: 'right', color: 'var(--text-dim)', fontSize: '11px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', marginBottom: '4px' }}>
+            {/* WebSocket status indicator */}
+            <div style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: wsStatus === 'connected' ? 'var(--accent)' : 'var(--red)',
+            }} />
+            <span style={{ color: wsStatus === 'connected' ? 'var(--accent)' : 'var(--red)' }}>
+              {wsStatus.toUpperCase()}
+            </span>
+          </div>
           <div>AUTO REFRESH 5s</div>
           {lastUpdated && (
             <div style={{ color: 'var(--accent)' }}>
@@ -60,7 +114,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Error state */}
       {error && (
         <div style={{
           background: '#ff444411',
@@ -74,32 +127,26 @@ export default function App() {
         </div>
       )}
 
-      {/* Loading state */}
       {!data && !error && (
         <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '60px' }}>
           LOADING METRICS...
         </div>
       )}
 
-      {/* Dashboard grid */}
       {data && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          {/* Row 1 — stats cards */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <LatencyCard data={data.latency} />
             <ErrorRateCard data={data.errorRate} />
           </div>
 
-          {/* Row 2 — requests chart */}
           <RequestsChart data={data.requestsPerMinute} />
 
-          {/* Row 3 — table + feed */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <TopEndpointsTable data={data.topEndpoints} />
-            <RecentRequestsFeed data={data.recentRequests} />
+            {/* Pass live requests — updates instantly via WebSocket */}
+            <RecentRequestsFeed data={allRequests} />
           </div>
-
         </div>
       )}
     </div>
